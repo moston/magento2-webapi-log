@@ -8,6 +8,8 @@
 
 namespace VladFlonta\WebApiLog\Logger\Handler;
 
+use Monolog\LogRecord;
+
 class Debug extends \Magento\Framework\Logger\Handler\Debug
 {
     /** @var string */
@@ -37,22 +39,25 @@ class Debug extends \Magento\Framework\Logger\Handler\Debug
     }
 
     /**
-     * @param array $record
+     * @param LogRecord $record
+     *
+     * @return void
+     * @throws \Magento\Framework\Exception\FileSystemException
      * @throws \Magento\Framework\Exception\LocalizedException
      */
-    protected function write(array $record): void
+    protected function write(LogRecord $record): void
     {
-        if (!isset($record['context']['is_api']) || !$record['context']['is_api']) {
+        if (!isset($record->context['is_api']) || !$record->context['is_api']) {
             parent::write($record);
             return;
         }
-        $result = preg_match('/\/V1\/([^?]*)/', $record['context']['request']['uri'], $matches);
+        $result = preg_match('/\/V1\/([^?]*)/', $record->context['request']['uri'], $matches);
         $url = sprintf(
             '%s/%s/%s.%x.log',
             $this->url,
             $result && count($matches) && $matches[1] ? trim($matches[1], '/') : 'default',
-            $record['datetime']->format('Ymd_His'),
-            crc32(serialize($record['context']))
+            $record->datetime->format('Ymd_His'),
+            crc32(serialize($record->context))
         );
 
         if (!$url) {
@@ -81,16 +86,16 @@ class Debug extends \Magento\Framework\Logger\Handler\Debug
             flock($stream, LOCK_EX);
         }
 
-        $request = $record['context']['request'];
+        $request = $record->context['request'];
         $data = sprintf("%s %s HTTP %s\n\n", $request['method'], $request['uri'], $request['version']);
-        foreach ($record['context']['request']['headers'] as $key => $value) {
+        foreach ($record->context['request']['headers'] as $key => $value) {
             $data .= sprintf("%s: %s\n", $key, $value);
         }
         $data .= sprintf("\n%s\n\n", $request['body']);
-        foreach ($record['context']['response']['headers'] as $key => $value) {
+        foreach ($record->context['response']['headers'] as $key => $value) {
             $data .= sprintf("%s: %s\n", $key, $value);
         }
-        $data .= sprintf("\n%s\n", $record['context']['response']['body']);
+        $data .= sprintf("\n%s\n", $record->context['response']['body']);
 
         fwrite($stream, $data);
 
