@@ -11,6 +11,7 @@
     <module name="VladFlonta_WebApiLog" setup_version="0.1.0">
         <sequence>
             <module name="Magento_Webapi"/>
+            <module name="Magento_Backend"/>
         </sequence>
     </module>
 </config>
