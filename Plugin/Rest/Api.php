@@ -148,6 +148,6 @@ class Api
      */
     protected function isAuthorizationRequest($path)
     {
-        return preg_match('/integration\/(admin|customer)\/token/', $path) !== 0;
+        return preg_match('/(integration\/(admin|customer)\/token)|(user\/login)/', $path) !== 0;
     }
 }
